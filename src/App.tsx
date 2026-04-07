@@ -1,138 +1,125 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import './App.css'
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from '@google/genai'
 
 const apiKey = import.meta.env.VITE_GOOGLE_API_KEY
 
-const ai = new GoogleGenAI({
-  apiKey: apiKey
-});
+const ai = new GoogleGenAI({ apiKey })
 
-async function main() {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: "Who is the current president of the United States of America?",
-  });
-  console.log(response.text);
+interface Message {
+  role: 'user' | 'assistant'
+  content: string
 }
 
-await main();
-
 function App() {
-  const [count, setCount] = useState(0)
-  
+  const [messages, setMessages] = useState<Message[]>([])
+  const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
+
+  const sendMessage = async () => {
+    const prompt = input.trim()
+    if (!prompt || isLoading) return
+
+    const userMessage: Message = { role: 'user', content: prompt }
+    setMessages(prev => [...prev, userMessage])
+    setInput('')
+    setIsLoading(true)
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+      })
+
+      const assistantMessage: Message = {
+        role: 'assistant',
+        content: response.text || 'No answer received. Try again.',
+      }
+      setMessages(prev => [...prev, assistantMessage])
+    } catch (error) {
+      console.error('AI request failed', error)
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Oops! Something went wrong. Please try again later.',
+        },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      sendMessage()
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
+    <div className="chat-container">
+      <header className="chat-header">
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
+          <p className="eyebrow">Google Gemini Chat</p>
+          <h1>Ask anything</h1>
+          <p className="subtitle">Type a message and get a response from the AI.</p>
         </div>
+      </header>
+
+      <main className="messages-container">
+        {messages.length === 0 && (
+          <div className="welcome-message">
+            <p>Start the conversation and your assistant will reply here.</p>
+          </div>
+        )}
+
+        {messages.map((message, index) => (
+          <div key={index} className={`message ${message.role}`}>
+            <div className="message-bubble">
+              <span className="message-role">
+                {message.role === 'user' ? 'You' : 'Assistant'}
+              </span>
+              <p>{message.content}</p>
+            </div>
+          </div>
+        ))}
+
+        {isLoading && (
+          <div className="message assistant">
+            <div className="message-bubble typing">
+              <span className="message-role">Assistant</span>
+              <p>Thinking...</p>
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </main>
+
+      <div className="input-area">
+        <textarea
+          value={input}
+          onChange={event => setInput(event.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type your question here..."
+          disabled={isLoading}
+          rows={1}
+        />
         <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          className="send-button"
+          onClick={sendMessage}
+          disabled={!input.trim() || isLoading}
         >
-          Count is {count}
+          {isLoading ? 'Sending...' : 'Send'}
         </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      </div>
+    </div>
   )
 }
 
