@@ -83,7 +83,7 @@ function App() {
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.text || 'No answer received. Try again.',
+        content: response.text || 'Nenhuma resposta recebida. Tente novamente.',
       }
       setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
@@ -92,7 +92,7 @@ function App() {
         ...prev,
         {
           role: 'assistant',
-          content: 'Oops! Something went wrong. Please try again later.',
+          content: 'Ops! Algo deu errado. Por favor, tente novamente mais tarde.',
         },
       ])
     } finally {
@@ -125,23 +125,23 @@ function App() {
     <div className="chat-container">
       <header className="chat-header">
         <div>
-          <p className="eyebrow">Google Gemini Chat</p>
-          <h1>Ask anything</h1>
-          <p className="subtitle">Type a message and get a response from the AI.</p>
+          <p className="eyebrow">Chat Google Gemini</p>
+          <h1>Pergunte qualquer coisa</h1>
+          <p className="subtitle">Digite uma mensagem e receba uma resposta da IA.</p>
         </div>
         <button
           className="clear-button"
           onClick={clearChat}
-          title="Clear conversation history"
+          title="Limpar histórico da conversa"
         >
-          Clear Chat
+          Limpar chat
         </button>
       </header>
 
       <main className="messages-container">
         {messages.length === 0 && (
           <div className="welcome-message">
-            <p>Start the conversation and your assistant will reply here.</p>
+            <p>Comece a conversa e seu assistente responderá aqui.</p>
           </div>
         )}
 
@@ -149,7 +149,7 @@ function App() {
           <div key={index} className={`message ${message.role}`}>
             <div className="message-bubble">
               <span className="message-role">
-                {message.role === 'user' ? 'You' : 'Assistant'}
+                {message.role === 'user' ? 'Você' : 'Assistente'}
               </span>
               <p>{message.content}</p>
             </div>
@@ -159,8 +159,8 @@ function App() {
         {isLoading && (
           <div className="message assistant">
             <div className="message-bubble typing">
-              <span className="message-role">Assistant</span>
-              <p>Thinking...</p>
+              <span className="message-role">Assistente</span>
+              <p>Pensando...</p>
             </div>
           </div>
         )}
@@ -173,7 +173,7 @@ function App() {
           value={input}
           onChange={event => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type your question here..."
+          placeholder="Digite sua pergunta aqui..."
           disabled={isLoading}
           rows={1}
         />
@@ -182,7 +182,7 @@ function App() {
           onClick={sendMessage}
           disabled={!input.trim() || isLoading}
         >
-          {isLoading ? 'Sending...' : 'Send'}
+          {isLoading ? 'Enviando...' : 'Enviar'}
         </button>
       </div>
     </div>
